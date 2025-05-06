@@ -3,6 +3,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from utils.bookmarklet import activate_bookmarklet
+from utils.json import salvar_processo_em_json
+
 
 def export_detalhe_to_json(driver, output_dir: str = None) -> Path:
     """
@@ -19,7 +21,7 @@ def export_detalhe_to_json(driver, output_dir: str = None) -> Path:
     - Path para o arquivo JSON gerado.
     """
     project_root = Path(__file__).parent.parent.parent
-    default_dir = project_root / "Dados_json"
+    default_dir = project_root / "Dados_json_completos"
     base_dir = Path(output_dir) if output_dir else default_dir
     base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -57,5 +59,3 @@ def export_detalhe_to_json(driver, output_dir: str = None) -> Path:
 
     print(f"📄 Dados de detalhes exportados para: {output_path}")
     return output_path
-if __name__ ==__main__':
-   export_detalhe_to_json()

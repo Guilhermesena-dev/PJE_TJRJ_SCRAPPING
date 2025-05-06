@@ -9,15 +9,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from utils.login import login
 from utils.login_button import login_button
 from utils.bookmarklet import activate_bookmarklet
-from utils.json import salvar_processo_em_json  # sua função de salvar
+from utils.json import salvar_processo_em_json
 from utils.parse_numero_processo import parse_numero_processo
-from access.detalhes_access import fechar_detalhe_processo, abrir_detalhe_processo
+from access.detalhes_access import fechar_detalhe_processo
 from access.abrir_detalhe import abrir_detalhes_do_processo
-
 
 
 def acessar_sites(driver, usuario, senha, output_dir: str = None):
     try:
+        # Login no PJe
         login_url = "https://tjrj.pje.jus.br/1g/QuadroAviso/listViewQuadroAvisoMensagem.seam?cid=97699"
         driver.get(login_url)
         login(driver, usuario, senha)
@@ -31,6 +31,7 @@ def acessar_sites(driver, usuario, senha, output_dir: str = None):
         driver.get(terceira_url)
         WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
 
+        # Entrada manual do número de processo
         numero = input("Digite o número do processo: ").strip()
         if not numero:
             print("Nenhum número digitado. Encerrando.")
@@ -38,6 +39,7 @@ def acessar_sites(driver, usuario, senha, output_dir: str = None):
 
         salvar_processo_em_json(numero)
 
+        # Lê todos os processos armazenados
         project_root = Path(__file__).parent.parent.parent
         base_dir = Path(output_dir) if output_dir else project_root / "Dados_json"
         json_path = base_dir / "processos.json"
@@ -48,7 +50,7 @@ def acessar_sites(driver, usuario, senha, output_dir: str = None):
         numeros = [item["Número do Processo"] for item in dados if "Número do Processo" in item]
         print(f'🔢 Total de processos armazenados: {len(numeros)}')
 
-        bm_path = Path(__file__).parent.parent / "bookmarklets" / "consulta_bookmarklet.js"
+        bm_path = Path(__file__).parent.parent / "bookmarklet" / "consulta_bookmarklet.js"
 
         for num in numeros:
             try:
@@ -74,7 +76,18 @@ def acessar_sites(driver, usuario, senha, output_dir: str = None):
 
                 orig = abrir_detalhes_do_processo(driver)
                 if orig:
-                    activate_bookmarklet(driver, bm_path)
+                    detalhes = activate_bookmarklet(driver, str(bm_path))
+                    print(f"📋 Detalhes extraídos do processo:")
+                    for k, v in detalhes.items():
+                        print(f"  - {k}: {v}")
+
+                    # Salva os dados do processo individualmente
+                    nome_arquivo = f"{num.replace('.', '_').replace('-', '_')}.json"
+                    detalhes_path = base_dir / nome_arquivo
+                    with open(detalhes_path, "w", encoding="utf-8") as f:
+                        json.dump(detalhes, f, ensure_ascii=False, indent=2)
+                    print(f"💾 Salvo em {detalhes_path}")
+
                     time.sleep(1)
                     fechar_detalhe_processo(driver, orig)
 
