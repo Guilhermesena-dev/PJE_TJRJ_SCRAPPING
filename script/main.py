@@ -11,11 +11,17 @@ from access.pje_access import acessar_sites  # supondo que sua função acessar_
 load_dotenv()
 
 def main():
-    # Configurações do Chrome
     chrome_options = Options()
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--disable-notifications")
-    # chrome_options.add_argument("--headless")  # se preferir sem UI
+    chrome_options.add_argument("--headless=new")  # Headless mais moderno e menos detectável
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+    chrome_options.add_experimental_option("useAutomationExtension", False)
+    chrome_options.add_argument("--window-size=1200,800")
+    chrome_options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36"
+    )
 
     driver = webdriver.Chrome(
         service=Service(ChromeDriverManager().install()),
@@ -23,6 +29,15 @@ def main():
     )
 
     try:
+        # Disfarçar rastros do Selenium
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+                Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            """
+        })
+    
         driver.command_executor.set_timeout(600)
     except Exception:
         pass

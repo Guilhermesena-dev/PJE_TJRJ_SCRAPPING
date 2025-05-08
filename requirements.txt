@@ -3,3 +3,4 @@ openpyxl
 pandas
 webdriver-manager
 selenium
+watchdog
